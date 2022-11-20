@@ -332,6 +332,42 @@ class Algorithm:
     
         return objF 
 
+    def generate_neighborhoods(self,init_solution, num_neighborhood):
+        """
+        generate neighborhood structure for variable neighborhood search 
+        """
+        neighborhoods = [] # list of neighborhood structures for shaking 
+        for i in range(num_neighborhood):
+            solution = self.sol.Random_Solution(self.sol.SolutionRepresention()) # create a new random solution
+            _,cluster_size = self.sol.clusters_fit_constraint(0,solution)
+            neighbors, operators = self.neighborhood(init_solution,cluster_size) # create a new neighborhood 
+            neighborhoods.append([solution, neighbors, operators])
+        return neighborhoods
+
+    def variable_neighborhood (self, init_solution, num_neighborhood):
+        """
+        variable neighborhood search 
+        """
+        if num_neighborhood !=0:
+            neighborhoods = self.generate_neighborhoods(init_solution, num_neighborhood)
+ 
+        init_objF = []
+        for c in range(self.no_clusters):
+            init_objF.append(self.Objective_Function_Cluster(init_solution,c))
+
+        bestObj = init_objF.copy()
+        best_solution = init_solution.copy()
+        k=1
+        while (k < len(neighborhoods)):
+            n = random.randint(0,len(neighborhoods)-1) # shake 
+            local_optima, local_objF = self.local_search(neighborhoods[n][0]) # send solution to neighborhood to get local optima from local search 
+            if sum(local_objF) > sum(bestObj):
+                best_solution = local_optima.copy()
+                bestObj = local_objF.copy()
+                continue
+            else:
+                k = k+1
+        return best_solution, bestObj
 ##################################################  MAIN  ###########################################################################
 
 X = Problem()   
@@ -347,61 +383,87 @@ Nodes = solution.SolutionRepresention()
 Initial_Solution = solution.Greedy_Solution(Nodes)
 
 # 10 Iterative on Local search
-curveObj_Local = []
-curveTime_Local = []
-solutions_local = []
+# curveObj_Local = []
+# curveTime_Local = []
+# solutions_local = []
+# print("Initial Solution: ", Initial_Solution)
+# for i in range(10):
+#     start_time = time.time()
+#     optimum , objf = alg.local_search(Initial_Solution)
+#     end_time = time.time()
+#     curveObj_Local.append(sum(objf))
+#     solutions_local.append(optimum)
+#     elapsed_time = end_time - start_time
+#     curveTime_Local.append(elapsed_time)
+
+# print("-----------------------------------")
+# print("Results - Local Search")
+# print("Iteration number ", "Objective Function ", 'Time')
+
+# for index, sec in enumerate(curveTime_Local):
+#     print(index+1, '\t\t\t',curveObj_Local[index],'\t\t', sec) 
+# print("Average Time: ",sum(curveTime_Local)/len(curveTime_Local))
+# print("Average Objective Function: ",sum(curveObj_Local)/len(curveObj_Local))
+# print("Best Solution and Objective Function: ", solutions_local[curveObj_Local.index(max(curveObj_Local))], max(curveObj_Local))
+# local_stdev = f'{statistics.stdev(curveObj_Local):.9f}'
+# print("Standard Deviation Objective Function: ", local_stdev)
+
+# 10 Iterative on Multi Start search
+# curveObj_multi = []
+# curveTime_multi = []
+# solutions_multi = []
+# for i in range(10):
+#     start_time = time.time()
+#     global_solution , global_objf = alg.multistart(Initial_Solution)
+#     end_time = time.time()
+#     curveObj_multi.append(sum(global_objf))
+#     solutions_multi.append(global_solution)
+#     elapsed_time = end_time - start_time
+#     curveTime_multi.append(elapsed_time)
+# print("-----------------------------------")
+# print("Results - Multistart local Search")
+# print("Iteration number ", "Objective Function ", 'Time')
+
+# for index, sec in enumerate(curveTime_multi):
+#     print(index+1, '\t\t\t',curveObj_multi[index],'\t\t', sec) 
+# print("Average Time: ",sum(curveTime_multi)/len(curveTime_multi))
+# print("Average Objective Function: ", sum(curveObj_multi)/len(curveObj_multi))
+# print("Best Solution and Objective Function: ", solutions_multi[curveObj_multi.index(max(curveObj_multi))], max(curveObj_multi))
+# multi_stdev = f'{statistics.stdev(curveObj_multi):.9f}'
+# print("Standard Deviation Objective Function: ", multi_stdev)
+
+# 10 Iterative on variable neighborhood search
+curveObj_variable = []
+curveTime_variable = []
+solutions_variable = []
 print("Initial Solution: ", Initial_Solution)
 for i in range(10):
     start_time = time.time()
-    optimum , objf = alg.local_search(Initial_Solution)
+    optimum , objf = alg.variable_neighborhood(Initial_Solution, 5)
     end_time = time.time()
-    curveObj_Local.append(sum(objf))
-    solutions_local.append(optimum)
+    curveObj_variable.append(sum(objf))
+    solutions_variable.append(optimum)
     elapsed_time = end_time - start_time
-    curveTime_Local.append(elapsed_time)
+    curveTime_variable.append(elapsed_time)
 
 print("-----------------------------------")
-print("Results - Local Search")
+print("Results - Variable Neighborhood Search")
 print("Iteration number ", "Objective Function ", 'Time')
 
-for index, sec in enumerate(curveTime_Local):
-    print(index+1, '\t\t\t',curveObj_Local[index],'\t\t', sec) 
-print("Average Time: ",sum(curveTime_Local)/len(curveTime_Local))
-print("Average Objective Function: ",sum(curveObj_Local)/len(curveObj_Local))
-print("Best Solution and Objective Function: ", solutions_local[curveObj_Local.index(max(curveObj_Local))], max(curveObj_Local))
-local_stdev = f'{statistics.stdev(curveObj_Local):.9f}'
-print("Standard Deviation Objective Function: ", local_stdev)
-
-# 10 Iterative on Multi Start search
-curveObj_multi = []
-curveTime_multi = []
-solutions_multi = []
-for i in range(10):
-    start_time = time.time()
-    global_solution , global_objf = alg.multistart(Initial_Solution)
-    end_time = time.time()
-    curveObj_multi.append(sum(global_objf))
-    solutions_multi.append(global_solution)
-    elapsed_time = end_time - start_time
-    curveTime_multi.append(elapsed_time)
-print("-----------------------------------")
-print("Results - Multistart local Search")
-print("Iteration number ", "Objective Function ", 'Time')
-
-for index, sec in enumerate(curveTime_multi):
-    print(index+1, '\t\t\t',curveObj_multi[index],'\t\t', sec) 
-print("Average Time: ",sum(curveTime_multi)/len(curveTime_multi))
-print("Average Objective Function: ", sum(curveObj_multi)/len(curveObj_multi))
-print("Best Solution and Objective Function: ", solutions_multi[curveObj_multi.index(max(curveObj_multi))], max(curveObj_multi))
-multi_stdev = f'{statistics.stdev(curveObj_multi):.9f}'
-print("Standard Deviation Objective Function: ", multi_stdev)
-
+for index, sec in enumerate(curveTime_variable):
+    print(index+1, '\t\t\t',curveObj_variable[index],'\t\t', sec) 
+print("Average Time: ",sum(curveTime_variable)/len(curveTime_variable))
+print("Average Objective Function: ",sum(curveObj_variable)/len(curveObj_variable))
+print("Best Solution and Objective Function: ", solutions_variable[curveObj_variable.index(max(curveObj_variable))], max(curveObj_variable))
+variable_stdev = f'{statistics.stdev(curveObj_variable):.9f}'
+print("Standard Deviation Objective Function: ", variable_stdev)
 
 #  Plotting
 plt.figure()
-print(curveObj_multi)
-plt.plot(range(10),curveObj_Local,'r', label='Local Search') 
-plt.plot(range(10), curveObj_multi,'b',label='Multistart Search')
+print(curveObj_variable)
+# plt.plot(range(10),curveObj_Local,'r', label='Local Search') 
+# plt.plot(range(10), curveObj_multi,'b',label='Multistart Search')
+plt.plot(range(10),curveObj_variable,'r', label='Variable Search') 
 plt.ylabel('Objective Function')
 plt.xlabel('Iteration')
 plt.legend()
